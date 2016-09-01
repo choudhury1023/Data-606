@@ -1,0 +1,87 @@
+---
+title: "Lab 0"
+author: "Ahsanul Choudhury"
+date: "August 31, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#required packages
+```{r packages, include=TRUE}
+
+library(ggplot2)
+```
+
+#source
+```{r source, include=TRUE}
+source("more/present.R")
+source("more/arbuthnot.R")
+```
+
+#1.What years are included in this data set? What are the dimensions of the data frame and what are the variable or column names?
+
+#Years
+```{r years, include=TRUE}
+present$year
+```
+
+#dimensions
+```{r dimensions, include=TRUE}
+dim(present)
+```
+
+#column names
+```{r columns, include=TRUE}
+names(present)
+```
+
+#2.How do these counts compare to Arbuthnot's? Are they on a similar scale?
+
+#arbuthnot's Years
+```{r arbuthnot_years, include=TRUE}
+arbuthnot$year
+#Arbuthnot's data were taken between 1629 to 1710, where as the present data were taken between 1940 to 2002
+```
+
+#arbuthnot's dimensions
+```{r arbuthnot_dimensions, include=TRUE}
+dim(arbuthnot)
+#Arbuthnot's data is 19 years longer then present data
+```
+
+#present total
+```{r total, include=TRUE}
+present$boys + present$girls
+```
+
+#arbuthnot's total
+```{r arbuthnot_total, include=TRUE}
+arbuthnot$boys + arbuthnot$girls
+#The count per year is much lager in present data, they are not similer in scale
+```
+
+#3.Make a plot that displays the boy-to-girl ratio for every year in the data set. What do you see? Does Arbuthnot's observation about boys being born in greater proportion than girls hold up in the U.S.? Include the plot in your response.
+
+#plot displaying boy-to-girl ratio
+```{r plot, include=TRUE}
+ratio <- present$boys/present$girls
+ggplot(present, aes(x = year, y = ratio))+ geom_point(colour="red", size = 1)
+#The boy to girl ratio declines over the sample years
+```
+
+#Arbuthnot's observation
+```{r observation, include=TRUE}
+present$boys > present$girls
+#Arbuthnot's observation about boys being born in greater proportion than girls hold up in the U.S.
+```
+
+
+#4.In what year did we see the most total number of births in the U.S.? 
+
+#year with most total number of births
+```{r most, include=TRUE}
+present$year[which.max(present$boys + present$girls)]
+```
