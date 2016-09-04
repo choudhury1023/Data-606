@@ -1,0 +1,95 @@
+---
+title: "Lab1"
+author: "Ahsanul Choudhury"
+date: "September 4, 2016"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages, include=FALSE}
+library(IS606)
+library(ggplot2)
+```
+
+
+```{r load-data, include=TRUE}
+source("more/cdc.R")
+```
+
+
+## Make a scatterplot of weight versus desired weight. Describe the     relationship between these two variables.
+
+```{r scatterplot, include=TRUE}
+ggplot(cdc, aes(x=weight, y=wtdesire)) + geom_point(alpha=1/10, colour="red") +   geom_abline(intercept=0, slope=1)
+##There is a positive realtionship between the variables
+```
+
+##Let's consider a new variable: the difference between desired weight    (`wtdesire`) and current weight (`weight`). Create this new variable by    subtracting the two columns in the data frame and assigning them to a new    object called `wdiff`.
+
+```{r new-object, include=TRUE}
+cdc$wdiff <- cdc$weight - cdc$wtdesire
+```
+
+
+##What type of data is `wdiff`? If an observation `wdiff` is 0, what does this mean about the person's weight and desired weight. What if `wdiff` is positive or negative?
+
+##`wdiff` is numarical data. If `wdiff` is that means the person's current weight is their desired weight. if `wdiff` is positive that means the person wants to loose weight and if negative the person wants to gain weight.
+
+
+
+##Describe the distribution of `wdiff` in terms of its center, shape, and    spread, including any plots you use. What does this tell us about how people    feel about their current weight?
+
+```{r density-plot, include=TRUE}
+den <- density(cdc$wdiff)
+plot(den)
+##The density plot has a one clear peak so its a unimodal distribution and it is centered around 0.
+```
+
+```{r wdiff-summary, include=TRUE}
+summary (cdc$wdiff)
+##From the density plot and summary we can see majority or atleast 1/3 of the participent claims to be satisfied with their current weight, the average weight loss goal is 14.59 and very few partiipent wants to gain weight with one unusual goal of 500.
+```
+
+
+##Using numerical summaries and a side-by-side box plot, determine if men tend    to view their weight differently than women.
+
+```{r summary-male, include=TRUE}
+mwdiff <- cdc$gender=="m"
+M <- cdc[mwdiff,]
+summary (M$wdiff)
+```
+
+```{r summary-female, include=TRUE}
+fwdiff <- cdc$gender=="f"
+F <- cdc[fwdiff,]
+summary (F$wdiff)
+```
+
+```{r boxplot, include=TRUE}
+boxplot(M$wdiff,F$wdiff)
+##Male participent has mean weight loss terget of 10.71 which is lower than the female mean target of 18.15, more male wants to gain weight than female.
+```
+
+
+##Now it's time to get creative. Find the mean and standard deviation of     `weight` and determine what proportion of the weights are within one standard deviation of the mean.
+
+```{r mean, include=TRUE}
+mwt <- round(mean(cdc$weight), 2)
+mwt
+#mean weight is 169.68
+```
+
+```{r standard-deviation, include=TRUE}
+stdv <- sd(cdc$weight)
+stdv
+#standard deviation 40.08097
+```
+
+```{r proportion, include=TRUE}
+onestdv <- subset(cdc, weight < (mwt + stdv) & weight > (mwt - stdv))
+dim(onestdv)[1]/dim(cdc)[1]
+#proportion of weight within one standard diviation of mean are 0.7076
+```
