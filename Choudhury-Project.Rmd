@@ -1,0 +1,324 @@
+---
+title: "DATA 606 Final Project"
+author: "Ahsanul Choudhury"
+date: "December 4, 2016"
+output:
+  html_document:
+    theme: cerulean   
+    code_folding: hide
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include=TRUE, cache=TRUE}
+# DO NOT REMOVE
+# THIS IS FOR SETTING SOME PLOTTING PARAMETERS SO THAT YOUR PLOTS DON'T TAKE UP TOO MUCH SPACE
+# IF YOU WOULD LIKE TO CHANGE THESE, SEE HELP FILES ON THE par() FUNCTION
+# OR ASK FOR HELP
+library(knitr)
+## set global chunk options
+opts_chunk$set(fig.path='figure/manual-', cache.path='cache/manual-', fig.align='center', fig.show='hold', par=TRUE)
+## tune details of base graphics (http://yihui.name/knitr/hooks)
+knit_hooks$set(par=function(before, options, envir){
+if (before && options$fig.show!='none') par(mar=c(4,4,.2,.1),cex.lab=.95,cex.axis=.9,mgp=c(2,.7,0),tcl=-.3)
+})
+```
+
+
+![Picture credit: http://michiganradio.org/post/woman-pays-182-more-car-insurance-detroit-she-would-ann-arbor](https://github.com/choudhury1023/Data-606/blob/gh-pages/car_insurance.png?raw=true)
+
+
+```{r echo=TRUE}
+# load data
+data <- read.csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/bad-drivers/bad-drivers.csv", header = TRUE, stringsAsFactors = FALSE)
+```
+
+
+```{r load_libraries, results='hide', message=FALSE, warning=FALSE}
+library(dplyr)
+library(DT)
+library(tidyr)
+library(ggplot2)
+library(plotly)
+```
+
+### Part 1 - Introduction:
+
+Cars are important part of modern life. While for some cars are a mean to get to A to B, for others cars are a necessity to conduct their day to day business. Driving car has become such an integral part of our lives that sometimes we forget the dangers that are associated with it. Accidents can happen even to the most careful among us and when accidents do happen car insurance is the only thing that can save us from a lot of personal liabilities which we are otherwise accountable for. 
+
+We know car Insurance premium varies from driver to driver and there are lots of variables at work behind that, for example: age of the driver, driving record etc. We also pay higher or lower insurance depending on which state we live in. Can we predict the average insurance premiums for states from the driving record of that state.
+
+In this project we will look at some car insurance related data from each of the 50 states and D.C., pick two variables from the data and try to predict average car insurance premium using those two variables and compare them with actual data. (Note: Research question was changed as instructed by instructor of the course, Dr. Jason Bryer)
+
+
+### Part 2 - Data:
+
+#####Data Collection
+
+Data was collected from,   https://github.com/fivethirtyeight/data/blob/master/bad-drivers/bad-drivers.csv
+
+The dataset contains data on number of drivers involved in fatal collisions per billion miles, diferent conditions under those collisions happend, car insurance premium in U.S. dollars and losses incurred by insurance companies for collisions per insured driver in U.S. dollars for all 50 states of United States of America and District of Columbia.
+
+The source of each variables can be found in the following table:
+```{r source}
+Variable <- c("Number of drivers involved in fatal collisions per billion miles", "Percentage Of Drivers Involved In Fatal Collisions Who Were Speeding", "Percentage Of Drivers Involved In Fatal Collisions Who Were Alcohol-Impaired",
+"Percentage Of Drivers Involved In Fatal Collisions Who Were Not Distracted",
+"Percentage Of Drivers Involved In Fatal Collisions Who Had Not Been Involved In Any Previous Accidents", "Car Insurance Premiums ($)", "Losses incurred by insurance companies for collisions per insured driver ($)")
+
+Source <- c("National Highway Traffic Safety Administration, 2012", "National Highway Traffic Safety Administration, 2009", "National Highway Traffic Safety Administration, 2012", "National Highway Traffic Safety Administration, 2012", "National Highway Traffic Safety Administration, 2012", "National Association of Insurance Commissioners, 2011", "National Association of Insurance Commissioners, 2010")
+
+data_source <- data.frame(Variable, Source)
+
+knitr::kable(data_source)
+```
+
+#####Cases:
+
+There are 51 cases, 1 for each of 50 states plus 1 for District of Columbia with 8 variables.
+
+
+#####Variables:
+
+Our response variable for this project is **Car Insurance Premiums ($)** and the two chosen explanatory variables are:
+
+-   Number of drivers involved in fatal collisions per billion miles.
+
+-   Losses incurred by insurance companies for collisions per insured driver ($).
+
+
+#####Type of Study:
+
+The study is observational, the data is collected based on what is seen whithout any interference.
+
+
+#####Scope of inference - generalizability:
+
+The data represents entire population of U.S. drivers. Therefore, the data data is generalizable to the entire U.S. population.
+
+
+#####Scope of inference - causality:
+
+The data on collision includeds that involves fatality only, where as the losses incurred by the insurance companies per insured drivers represents all type of collisions not just fatal collisions. Also, the differnce in insurance premimum state by state will be influenced by other factors such as vehicular theft, natural disaster etc.
+
+
+
+
+
+### Part 3 - Exploratory data analysis:
+
+To start our analysis, I have removed the unnecessary columns from the original data and renamed the column for ease of analysis.  We have one table with four columns, below are the names of the columns and what they represent:
+
+-   state: names of the state that the data reprensents.
+
+-   fatal_accident: Number of drivers involved in fatal collisions per billion miles.
+
+- losses: Losses incurred by insurance companies for collisions per insured driver ($).
+
+-   insurance_premiums: Average car insurance premiums for the state ($) 
+
+
+```{r col_neames, eval=TRUE, results="hide"}
+##Retrive names of columns
+names(data)
+##Select only required columns
+sumdata <- data.frame(data$State, data$Number.of.drivers.involved.in.fatal.collisions.per.billion.miles,  data$Losses.incurred.by.insurance.companies.for.collisions.per.insured.driver...., data$Car.Insurance.Premiums....)
+```
+
+**Final Data**
+
+```{r data, eval=TRUE}
+##Rename required columns
+names(sumdata) <- c("state", "fatal_accident", "losses", "insurance_premiums")
+datatable(sumdata, options = list(pageLength = 5))
+```
+
+**Summary data**
+
+```{r summary1, eval=TRUE, message=FALSE, warning=FALSE}
+summary(sumdata)
+```
+
+**Bar plot representing the data**
+
+```{r plot1, eval=TRUE, message=FALSE, warning=FALSE}
+plot1 <- ggplot(data = (gather(sumdata,"variable", "value", 2:4)), aes(x = state, y = value, fill = variable))+ geom_bar(stat="identity", position="dodge") + ggtitle("Fatal Collision, Losses and Premiums") + ylab("Number of Drivers Involved in Fatal collision Per Billion Mile/
+Losses Iincurred by Insurance Companies for Collisions Per Insured Driver($)/
+Insurance Premiums ($)") +  facet_wrap(~ variable) + coord_flip()
+
+ggplotly(plot1)
+```
+
+**Preparing data**
+
+```{r linear_model1, eval=TRUE}
+m1 <- lm(insurance_premiums ~ fatal_accident, data = sumdata)
+summary(m1)
+plot(sumdata$insurance_premiums ~ sumdata$fatal_accident)
+abline(m1)
+cor( sumdata$insurance_premiums, sumdata$fatal_accident)
+```
+
+If the number of drivers involved in fatal collisions per billion miles increases by 1 the insurance premium goes down by $8.64, which is surprising. Only 3.99% of the variance found in the response variable (`insurance_premiums`) can be explained by the explanatory variable (`fatal_accident`). There is a very weak negative linear relationship between the two variables.
+
+```{r linear_model2, eval=TRUE}
+m2 <- lm(insurance_premiums ~ losses, data = sumdata)
+summary(m2)
+plot(sumdata$insurance_premiums ~ sumdata$losses)
+abline(m2)
+cor( sumdata$insurance_premiums, sumdata$losses)
+```
+
+Every dollar increase in losses incurred by the insurance companies the insurance premimum goes up by $4.4733, roughly 38.83% of the of the variance found in the response variable (`insurance_premiums`) can be explained by this predictor variable (`losses`). There is a moderate positive linear relationship between the two variables
+
+**Research question**
+
+Now, to answer our research question we will try to predict the insurance premium of three states with highest, lowest and median insurance premium by using the two chosen variables for the states;  `fatal_accident` (number of drivers involved in fatal collisions per billion miles) and `losses` (losses incurred by insurance companies for collisions per insured driver).
+
+For the project I will analyze the data from three stats with maximum, minimum and median average insurance premimums. 
+
+State with maximum insurance premium
+```{r maximum, eval=TRUE}
+sumdata %>% 
+      filter(insurance_premiums==max(insurance_premiums))
+```
+
+State with minimum insurance premium
+```{r minimum, eval=TRUE}
+sumdata %>% 
+      filter(insurance_premiums==min(insurance_premiums))
+```
+
+State with median insurance premium
+```{r median, eval=TRUE}
+sumdata %>% 
+      filter(insurance_premiums==median(insurance_premiums))
+```
+
+
+To predict the insurance premiums we will use the **Least Square Regression Line Equation**:
+
+
+\[
+  \hat{y} = \beta_0 + \beta_1x
+\]
+
+Where,
+
+$\beta_1$ = The slope of the regression line 
+
+$\beta_0$ = The intercept point of the regression line and the y axis.
+
+Estimate New Jersey average insurance premimum by looking at number of drivers involved in fatal collisions per billion miles:
+
+\[
+  \hat{New Jersey} = `r 1023.35 + (-8.64) * 11.2`
+\]
+
+Our model under estimates the insurance premimum by `r 1301.52 - (1023.35 + (-8.64) * 11.2)`
+
+
+Estimate Idaho average insurance premimum by looking at number of drivers involved in fatal collisions per billion miles:
+
+\[
+  \hat{Idaho} = `r 1023.35 + (-8.64) * 15.3`
+\]
+
+Our model over estimates the insurance premimum by `r 1023.35 + (-8.64) * 15.3 - 641.96`
+
+Estimate South Carolina average insurance premimum by looking at number of drivers involved in fatal collisions per billion miles:
+
+\[
+  \hat{South Carolina} = `r 1023.35 + (-8.64) * 23.9`
+\]
+
+Our model under estimates the insurance premimum by `r 858.97 - (1023.35 + (-8.64) * 11.2)`
+
+Estimate New Jersey average insurance premimum by looking at losses incurred by insurance companies for collisions per insured driver ($):
+
+\[
+  \hat{New Jersey} = `r 285.325 + 4.473 * 159.85`
+\]
+
+Our model under estimates the insurance premimum by `r 1301.52 - (285.325 + 4.473 * 159.85)`
+
+Estimate Idaho average insurance premimum by looking at losses incurred by insurance companies for collisions per insured driver ($):
+
+\[
+  \hat{Idaho} = `r 285.325 + 4.473 * 82.75`
+\]
+
+Our model over estimates the insurance premimum by `r 285.325 + 4.473 * 82.75 - 641.96`
+
+Estimate South Carolina average insurance premimum by looking at number of drivers involved in fatal collisions per billion miles:
+
+\[
+  \hat{South Carolina} = `r 285.325 + 4.473 * 116.29`
+\]
+
+Our model under estimates the insurance premimum by `r 858.97 - (285.325 + 4.473 * 116.29)`
+
+
+
+### Part 4 - Inference:
+
+For my project I have used linear regression model to preditct insurance premiums from two variables. But is it appropriate to use the linear regression model here? To answer that I will conduct a model diagnostic to satisfy the following conditons:
+
+Linearity:
+The data should show a linear trend
+
+Nearly Normal Residuals:
+Generally the residuals must be nearly normal.
+
+Constant Variability:
+The variability of points around the least squares line remains roughly constant.
+
+Independent Observations:
+The observations of the data set must be independent.
+
+**Diagnose fatal_accident model**
+
+```{r plot2, eval=TRUE}
+par(mfrow=c(2,2))
+plot(sumdata$fatal_accident, sumdata$insurance_premiums)
+hist(m1$residuals)
+qqnorm(m1$residuals)
+qqline(m1$residuals)
+plot(sumdata$fatal_accident, m1$residuals)
+abline(h = 0, lty = 3)
+```
+
+From the scatter plot above we can see there is low but a negative linear trend with some influencial outliers. The Q-Q plot and histogram indicats nearly normal residual and the residual plot shows constant variability. Also we have strong evidence of the independence of the data.
+
+
+**Diagnose losses model**
+
+```{r plot3, eval=TRUE}
+par(mfrow=c(2,2))
+plot(sumdata$losses, sumdata$insurance_premiums)
+hist(m2$residuals)
+qqnorm(m2$residuals)
+qqline(m2$residuals)
+plot(sumdata$losses, m2$residuals)
+abline(h = 0, lty = 3)
+```
+
+From the scatter plot above we can see there is moderate positive linear trend. The Q-Q plot and histogram indicats nearly normal residual and the residual plot shows constant variability. Also we have strong evidence of the independence of the data.
+
+We can conclude both our models satisfy conditions of linear regression model.
+
+### Part 5 - Conclusion: 
+In my project I have tried to estimate average insurance premimum by states from two variables from my initial data set using linear regression model and compare it with actual value. One of my variable, "losses incurred by insurance companies for collisions per insured driver ($)" came closest to actual value but still the difference is too high. There are lots of other varibles that contributes to this difference in average insurance premimums which are out of scope for this project.
+
+### References:
+-   Picture source: http://michiganradio.org/post/woman-pays-182-more-car-insurance-detroit-she-would-ann-arbor
+
+-   Data source: https://github.com/fivethirtyeight/data/blob/master/bad-drivers/bad-drivers.csv
+
+-   Data explanation: http://fivethirtyeight.com/datalab/which-state-has-the-worst-drivers/
+
